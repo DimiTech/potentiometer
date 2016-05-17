@@ -73,7 +73,7 @@
 				setTimeout(function() {
 
 					getCenter(self);
-
+					
 					// Position (the potentiometer value) = integers from 0 to 100
 					self.position = 50;
 					// Last position is used to make the knob not jump from 0 to 100 and vice-versa
@@ -235,6 +235,9 @@
 
 			// make the pot value available to the listener
 			valueChangeEvent.srcValue = self.position;
+
+			// make the canvas that triggered the event available to the listener
+			valueChangeEvent.srcId = self.canvas.id;
 
 			// target can be any Element or other EventTarget.
 			self.canvas.dispatchEvent(valueChangeEvent);

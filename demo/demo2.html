@@ -13,6 +13,8 @@
 	<style>
 		body {
 			background: #000;
+			font-family: Helvetica, Arial, sans-serif;
+			color: white;
 			-webkit-touch-callout: none;
 			-webkit-user-select: none;
 			-khtml-user-select: none;
@@ -21,21 +23,42 @@
 			user-select: none;
 		}
 		#pots {
-			display: inline-block;
-			margin: 200px auto 15px;
-			margin-left: calc(50% - 83px);
-		}
-		#labels {
-			color: white;
+			display: block;
+			margin: 100px auto 15px;
 			text-align: center;
-			margin-left: -15px;
 		}
-		#labels span { 
-			margin: 0 12px; 
+		#small-pots {
+			height: 150px;
+			width: 350px;
+			margin: 0 auto;
+			margin-top: -40px;
+		}
+		.small-pot { 
+			float: left;
+		}
+		#big-pot {
+			display: block;
+			margin-left: -430px;
+		}
+		label {
+			margin-left: -1.3em;
+			font-weight: bold;
 		}
 		canvas {
-			float: left;
+			display: inline-block;
 			margin-right: 20px;
+			margin-top: 30px;
+		}
+		.pot-value {
+			position: absolute;
+			background-color: #222;
+			border: 1px solid #333;
+			padding: 0 0.2em;
+			display: none;
+			margin-left: 1.3em;
+		}
+		#pot1-value {
+			margin-left: 2em;
 		}
 	</style>
 
@@ -50,39 +73,50 @@
 		position:
 	</div>
 
-	<!-- Here we've lined up 3 widgets with labels for each of them -->
 	<div id="pots">
-		<div id="labels">
-			<span>Bass</span>
-			<span>&nbsp;Mid</span>
-			<span>Treble</span>
+		
+		<div id="big-pot">
+			<div class="pot-value" id="pot1-value">0</div>
+			<canvas id="pot1"></canvas>
+			<br>
+			<label>DRIVE</label>
 		</div>
-		<canvas id="pot1"></canvas>
-		<canvas id="pot2"></canvas>
-		<canvas id="pot3"></canvas>
-		<canvas id="pot4"></canvas>
-		<canvas id="pot5"></canvas>
-		<canvas id="pot6"></canvas>
-		<canvas id="pot7"></canvas>
-		<canvas id="pot8"></canvas>
-		<canvas id="pot9"></canvas>
-		<canvas id="pot10"></canvas>
+
+		<div id="small-pots">
+			<div class="small-pot">
+				<div class="pot-value" id="pot2-value">0</div>
+				<canvas id="pot2"></canvas>
+				<br>
+				<label>LOW CUT</label>
+			</div>
+			<div class="small-pot">
+				<div class="pot-value" id="pot3-value">0</div>
+				<canvas id="pot3"></canvas>
+				<br>
+				<label>TONE</label>
+			</div>
+			<div class="small-pot">
+				<div class="pot-value" id="pot4-value">0</div>
+				<canvas id="pot4"></canvas>
+				<br>
+				<label>HIGH CUT</label>
+			</div>
+		</div>
 	</div>
-	
-	<!-- This div displays the information "broadcasted" by the widgets -->
-	<div id="db" style="display: block; color: white; font-style: italic; text-align: center;">0 db</div>
-	
-	<p style="color:white; width: 600px; margin: 0 auto; margin-top: 30px;">
-		The 'Treble' knob has limited movement range, which can be specified (or omitted) in the options object's leftBound and rightBound properties.
-	</p>
-	
 
 	<script type="text/javascript">
 
-		// We declare the widget variable in the global namespace
-		var pot1, pot2, pot3, pot4, pot5;
-		var pot6, pot7, pot8, pot9, pot10;
-		var label = document.getElementById('db');
+		// We declare the widget variables in the global namespace
+		var pot1, pot2, pot3, pot4;
+
+		// Each of the widget's value displays
+		var pot1value = document.getElementById('pot1-value');
+		var pot2value = document.getElementById('pot2-value');
+		var pot3value = document.getElementById('pot3-value');
+		var pot4value = document.getElementById('pot4-value');
+
+		// All widget value displays
+		var allValueLabels = document.getElementsByClassName('pot-value');
 
 		window.onload = function() {
 
@@ -111,17 +145,64 @@
 						    		   leftBound: 10,
 						    		   rightBound: 90 });
 
+			// Used for storing all timeouts
+			var valueDisplayTimeouts = [];
 
 			// Listen for potentiometer widget change events
 			document.addEventListener('potValueChanged', function(event) {
 
 				/* This widget's value ranges from 0 to 100, it's up to you to decide
-				/* what to do with that data. You can display it, use it for some calculations
-				/* or who knows what :) */
+				* what to do with that data. You can display it, use it for some calculations
+				* or who knows what :) */
 
-				// Here I use the event value to change the label with the value info we've got from the event
-				label.innerHTML = ~~(12 * event.srcValue / 100) - 6 + ' db';
+				var eventEmitterId = event.srcId;
 
+
+				// I know that using switch statements is not performant, I've used here just for readability purposes
+				switch (eventEmitterId) {
+					case 'pot1':
+						showValueDisplay(pot1value);
+						break;
+					case 'pot2':
+						showValueDisplay(pot2value);
+						break;
+					case 'pot3':
+						showValueDisplay(pot3value);
+						break;
+					case 'pot4':
+						showValueDisplay(pot4value);
+						break;
+				}
+
+				function showValueDisplay(potLabel) {
+
+					clearTimeouts();
+					
+					hideAllValueLabels();
+
+					// show the right one
+					potLabel.style.display = 'inline-block';
+
+					// give it appropriate text
+					potLabel.innerHTML = (event.srcValue / 10).toFixed(1);
+
+					// hide it after 1 second
+					valueDisplayTimeouts.push(setTimeout(function() {
+						hideAllValueLabels();
+					}, 1000));
+
+				}
+
+				function clearTimeouts() {
+					valueDisplayTimeouts.forEach(function(timeout) {
+						clearTimeout(timeout);
+					});
+				}
+
+				function hideAllValueLabels() {
+					for (var i = allValueLabels.length - 1; i >= 0; i--)
+						allValueLabels[i].style.display = 'none';
+				}
 
 			}, false);
 
