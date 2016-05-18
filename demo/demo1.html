@@ -19,14 +19,14 @@
 			-moz-user-select: none;
 			-ms-user-select: none;
 			user-select: none;
+			color: white;
 		}
 		#pots {
 			display: inline-block;
-			margin: 200px auto 15px;
+			margin: 30px auto 15px;
 			margin-left: calc(50% - 83px);
 		}
 		#labels {
-			color: white;
 			text-align: center;
 			margin-left: -15px;
 		}
@@ -43,12 +43,14 @@
 
 <body>
 	<!-- Some development info -->
-	<div id="cursorInfo" style="color: white">
+	<div id="cursorInfo">
 		x:<br>
 		y:<br>
 		arc:<br>
 		position:
 	</div>
+
+	<h1 style="font-size: 100%; text-align: center">A basic EQ use case scenario:</h1>
 
 	<!-- Here we've lined up 3 widgets with labels for each of them -->
 	<div id="pots">
@@ -63,9 +65,9 @@
 	</div>
 	
 	<!-- This div displays the information "broadcasted" by the widgets -->
-	<div id="db" style="display: block; color: white; font-style: italic; text-align: center;">0 db</div>
+	<div id="db" style="display: block; font-style: italic; text-align: center;">0 db</div>
 	
-	<p style="color:white; width: 600px; margin: 0 auto; margin-top: 30px;">
+	<p style="width: 600px; margin: 0 auto; margin-top: 30px;">
 		The 'Treble' knob has limited movement range, which can be specified (or omitted) in the options object's leftBound and rightBound properties.
 	</p>
 	

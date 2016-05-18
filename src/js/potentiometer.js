@@ -26,6 +26,12 @@
 			self.center = { x: 0, y: 0 }; // center of the widget, used for calculations
 			self.canvas = options.canvas;
 
+			// if the user has provided a bg image, attach it to self
+			if (options.bgImgUrl !== undefined) {
+				self.bgImg = new Image();
+				self.bgImg.src = options.bgImgUrl;
+			}
+
 			// the entire spritesheet
 			self.spritesheet = new Image();
 			self.spritesheet.src = options.spritesheetUrl;
@@ -38,6 +44,7 @@
 			if (self.leftBound >= self.rightBound)
 				throw new Error('Left bound must be lower then the rigth bound');
 
+			// When the spritesheet loads...
 			self.spritesheet.onload = function() {
 				setUpCanvas(self);
 				setUpContext(self);
@@ -81,6 +88,10 @@
 
 					drawKnob(self);
 
+					// Draw the background image if it exists
+					if (self.bgImg !== undefined) 
+						drawBgImg(self);
+
 					setUpMouseListeners(self);
 
 					// Recalculate centers when window resizes
@@ -106,12 +117,21 @@
 	}
 
 	function setUpCanvas(self) {
-		// sprite dimensions are x * x
-		self.canvas.height = self.spritesheet.width;
-		self.canvas.width  = self.spritesheet.width;
+		/* Canvas dimensions are x * x
+		*
+		*  If we have a bgImg, size the canvas according to
+		*  it's size, if not use the spritesheet width 
+		*/
+		if (self.bgImg !== undefined) {
+			self.canvas.height = self.bgImg.height;
+			self.canvas.width  = self.bgImg.width;
+		} else {
+			self.canvas.height = self.spritesheet.width;
+			self.canvas.width  = self.spritesheet.width;
+		}
 	}
 
-	// set up canvas context on which we will draw on
+	// Sets up canvas context on which we will draw on
 	function setUpContext(self) {
 		self.context = self.canvas.getContext('2d');
 	}
@@ -154,15 +174,32 @@
 
 		function drawOnCanvas(self, yPos) {
 			var context = self.context;
-			context.clearRect(0, 0, context.width, context.height);
-			context.drawImage(self.spritesheet, 0, yPos);
+			context.clearRect(0, 0, self.canvas.width, self.canvas.height);
+
+			/* If there's a background image specified draw it after the knob, if not just draw the knob */
+			if (self.bgImg !== undefined) {
+				var knobWidth = self.spritesheet.width;
+				var xOffset = ((self.canvas.width -  knobWidth) / 2);
+				var yOffset = ((self.canvas.height - knobWidth) / 2);
+				// yPos' sign needs to be inverted for this to work... what a bunch of BS from the canvas API..
+				yPos = -yPos;
+				context.drawImage(self.spritesheet, 0, yPos, knobWidth, knobWidth, xOffset, yOffset, knobWidth, knobWidth);
+				drawBgImg(self);
+			} else {
+				context.drawImage(self.spritesheet, 0, yPos);
+			}
 
 			self.lastPosition = self.position;
 		}
 		
 	}
 
-	// Calculate the spritesheet y offset value
+	function drawBgImg(self) {
+		var context = self.context;
+		context.drawImage(self.bgImg, 0, 0);
+	}
+
+	// Calculates the spritesheet y offset value
 	function getYPos(percent, self) {
 		var yPos = - (~~(percent * self.numberOfSprites) * self.spritesheet.width);
 
@@ -262,6 +299,7 @@
 		};
 
 	}
+	/* ------------------------------------------------- */
 
 	// Make the constructor available in the global scope
 	global.Potentiometer = Potentiometer;
