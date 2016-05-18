@@ -61,6 +61,13 @@
 		#pot1-value {
 			margin-left: 2em;
 		}
+		p {
+			text-align: left;
+			text-indent: 2em;
+			width: 600px;
+			margin: 0 auto;
+			margin-top: 30px;
+		}
 	</style>
 
 </head>
@@ -104,6 +111,20 @@
 				<label>HIGH CUT</label>
 			</div>
 		</div>
+
+		<p>
+			Here, all the knobs are being controlled by rotating them. This is their default behaviour, and you can change it by setting
+			the <em>verticalDrag</em> option to true, to use mouse dragging to controll their values. Rotation is mostly better suited for bigger widgets like these.
+		</p>
+
+		<p>
+			In this example, adding a background image (little dashes around the knob) is demonstrated on the 3 smaller knobs.
+		</p>
+
+		<p>
+			You can also incorporate your own tooltip, which I've done here to display the value of the knob that's currently being adjusted.
+		</p>
+
 	</div>
 
 	<script type="text/javascript">
@@ -127,27 +148,35 @@
 			// A big pot
 			pot1 = new Potentiometer({ canvas: document.getElementById('pot1'), 
 						    		   spritesheetUrl: '../src/img/decapitator_pot_big.png',
-						    		   leftBound: 8,
-						    		   rightBound: 92 });
+						    		   bounds: {
+							   		   		left: 8,
+							   		   		right: 92
+							   		   } });
 
 			// 3 small ones
 			pot2 = new Potentiometer({ canvas: document.getElementById('pot2'), 
 							   		   spritesheetUrl: '../src/img/decapitator_pot_med.png',
-						    		   leftBound: 8,
-						    		   rightBound: 92,
-						    		   bgImgUrl: '../src/img/decapitator_background_md.png' });
+						    		   bgImgUrl: '../src/img/decapitator_background_md.png',
+							   		   bounds: {
+							   		   		left: 8,
+							   		   		right: 92
+							   		   } });
 
 			pot3 = new Potentiometer({ canvas: document.getElementById('pot3'), 
 							  	 	   spritesheetUrl: '../src/img/decapitator_pot_med.png',
-						    		   leftBound: 8,
-						    		   rightBound: 92,
-						    		   bgImgUrl: '../src/img/decapitator_background_md.png' });
+						    		   bgImgUrl: '../src/img/decapitator_background_md.png',
+							   		   bounds: {
+							   		   		left: 8,
+							   		   		right: 92
+							   		   } });
 
 			pot4 = new Potentiometer({ canvas: document.getElementById('pot4'), 
 							  	 	   spritesheetUrl: '../src/img/decapitator_pot_med.png',
-						    		   leftBound: 8,
-						    		   rightBound: 92,
-						    		   bgImgUrl: '../src/img/decapitator_background_md.png' });
+						    		   bgImgUrl: '../src/img/decapitator_background_md.png',
+							   		   bounds: {
+							   		   		left: 8,
+							   		   		right: 92
+							   		   } });
 
 			// Used for storing all timeouts
 			var valueDisplayTimeouts = [];

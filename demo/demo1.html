@@ -37,6 +37,11 @@
 			float: left;
 			margin-right: 20px;
 		}
+		p {
+			width: 600px;
+			margin: 0 auto;
+			margin-top: 30px;
+		}
 	</style>
 
 </head>
@@ -67,8 +72,21 @@
 	<!-- This div displays the information "broadcasted" by the widgets -->
 	<div id="db" style="display: block; font-style: italic; text-align: center;">0 db</div>
 	
-	<p style="width: 600px; margin: 0 auto; margin-top: 30px;">
-		The 'Treble' knob has limited movement range, which can be specified (or omitted) in the options object's leftBound and rightBound properties.
+	<p>
+		Click on the knobs and drag up or down to adjust their value.
+	</p>
+
+	<p>
+		The 'Mid' knob is more precise than the other knobs (it's harder to move it). It is set for fine tuning.
+	</p>
+
+	<p>
+		The 'Treble' knob has limited movement range, which can be specified (or omitted) in the
+		<em>options</em> object's <em>bounds</em> object <em>left</em> and <em>right</em> properties.
+	</p>
+
+	<p>
+		To fine tune the knob values, hold <em>ctrl</em> (<em>option</em> on Mac) while adjusting the knob value.
 	</p>
 	
 
@@ -87,20 +105,26 @@
 			canvas = document.getElementById('pot1');
 
 			var options = { canvas: canvas, 
-						    spritesheetUrl: '../src/img/HyBrit_pot.png' };
+							spritesheetUrl: '../src/img/HyBrit_pot.png',
+						    verticalDrag: true };
 
 			pot1 = new Potentiometer(options);
 
 			// Now here's a shorter way:
 			canvas2 = document.getElementById('pot2');
-			pot2 = new Potentiometer( { canvas: canvas2, 
-							   		    spritesheetUrl: '../src/img/HyBrit_pot.png' } );
+			pot2 = new Potentiometer({ canvas: canvas2, 
+						    		   verticalDrag: true,
+						    		   sensitivity: 5,
+							   		   spritesheetUrl: '../src/img/HyBrit_pot.png' });
 
 			// And the shortest way:
 			pot3 = new Potentiometer({ canvas: document.getElementById('pot3'), 
 							  	 	   spritesheetUrl: '../src/img/HyBrit_pot.png',
-							  	 	   leftBound: 10,	// leftBound and rightBound are optional
-							  	 	   rightBound: 60   // you use them to limit the movement of the knob
+						    		   verticalDrag: true,
+							  	 	   bounds: { // bounds are optional, they're used to limit the movement of the knob
+							   		   		left: 10,
+							   		   		right: 60
+							   		   }
 									});
 
 

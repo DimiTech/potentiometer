@@ -37,8 +37,13 @@
 			self.spritesheet.src = options.spritesheetUrl;
 
 			// set bounds
-			self.leftBound  = options.leftBound  || 0;
-			self.rightBound = options.rightBound || 100;
+			if (options.bounds !== undefined) {
+				self.leftBound  = options.bounds.left  || 0;
+				self.rightBound = options.bounds.right || 100;
+			} else {
+				self.leftBound  = 0;
+				self.rightBound = 100;
+			}
 
 			// if bounds are incorrectly set throw an error
 			if (self.leftBound >= self.rightBound)
@@ -92,7 +97,10 @@
 					if (self.bgImg !== undefined) 
 						drawBgImg(self);
 
-					setUpMouseListeners(self);
+					// see if the user wants to control the knobs by rotation
+					var verticalDrag = options.verticalDrag      || false;
+					var sens   = options.sensitivity || 3;
+					setUpMouseListeners(self, verticalDrag, sens);
 
 					// Recalculate centers when window resizes
 					global.addEventListener('resize', function() {
@@ -125,6 +133,8 @@
 		if (self.bgImg !== undefined) {
 			self.canvas.height = self.bgImg.height;
 			self.canvas.width  = self.bgImg.width;
+			self.xOffset = ((self.canvas.width  - self.spritesheet.width) / 2);
+			self.yOffset = ((self.canvas.height - self.spritesheet.width) / 2);
 		} else {
 			self.canvas.height = self.spritesheet.width;
 			self.canvas.width  = self.spritesheet.width;
@@ -138,6 +148,10 @@
 
 	function countSprites(self) {
 	 	self.numberOfSprites = self.spritesheet.height / self.spritesheet.width;
+
+	 	// If we have an odd number of sprites, just cut out the last one (so we don't have black space at the end) 
+		if (self.numberOfSprites % 2 !== 0)
+			self.numberOfSprites -= 1;
 	}
 
 	function getCenter(self) {
@@ -147,6 +161,7 @@
 
 	function drawKnob(self, isMouseEvent) {
 		var percent = self.position;
+
 		// Don't allow values less than 0 and greater than 100
 		if (percent < self.leftBound)
 			percent = self.leftBound;
@@ -172,18 +187,18 @@
 			drawOnCanvas(self, yPos);
 		}
 
-		function drawOnCanvas(self, yPos) {
+	}
+
+	function drawOnCanvas(self, yPos) {
 			var context = self.context;
 			context.clearRect(0, 0, self.canvas.width, self.canvas.height);
 
 			/* If there's a background image specified draw it after the knob, if not just draw the knob */
 			if (self.bgImg !== undefined) {
 				var knobWidth = self.spritesheet.width;
-				var xOffset = ((self.canvas.width -  knobWidth) / 2);
-				var yOffset = ((self.canvas.height - knobWidth) / 2);
 				// yPos' sign needs to be inverted for this to work... what a bunch of BS from the canvas API..
 				yPos = -yPos;
-				context.drawImage(self.spritesheet, 0, yPos, knobWidth, knobWidth, xOffset, yOffset, knobWidth, knobWidth);
+				context.drawImage(self.spritesheet, 0, yPos, knobWidth, knobWidth, self.xOffset, self.yOffset, knobWidth, knobWidth);
 				drawBgImg(self);
 			} else {
 				context.drawImage(self.spritesheet, 0, yPos);
@@ -191,8 +206,6 @@
 
 			self.lastPosition = self.position;
 		}
-		
-	}
 
 	function drawBgImg(self) {
 		var context = self.context;
@@ -201,6 +214,7 @@
 
 	// Calculates the spritesheet y offset value
 	function getYPos(percent, self) {
+
 		var yPos = - (~~(percent * self.numberOfSprites) * self.spritesheet.width);
 
 		// Check the left bound
@@ -213,8 +227,35 @@
 		return yPos;
 	}
 
-	function setUpMouseListeners(self) {
+	function setUpMouseListeners(self, verticalDrag, sensitivity) {
 
+		if (verticalDrag === true)				// if we want to control the knobs by vertical mouse dragging
+			setUpVerticalDragListeners(self, sensitivity);
+		else {									// if we want to control the knobs by rotation
+			setUpRotationListeners(self);
+		}					
+			
+
+	}
+
+	function triggerEvents(self) {
+			// create a custom event
+			var valueChangeEvent = document.createEvent('Event');
+
+			// define that the event name is 'potValueChanged'.
+			valueChangeEvent.initEvent('potValueChanged', true, true);
+
+			// make the pot value available to the listener
+			valueChangeEvent.srcValue = self.position;
+
+			// make the canvas that triggered the event available to the listener
+			valueChangeEvent.srcId = self.canvas.id;
+
+			// target can be any Element or other EventTarget.
+			self.canvas.dispatchEvent(valueChangeEvent);
+		}
+
+	function setUpRotationListeners(self) {
 		self.isMouseDown = false;
 		var xDist, yDist, totalDist, arc;
 		var thisContext = self.context; // Context of the canvas that's been clicked on
@@ -230,8 +271,6 @@
 				self.isMouseDown = true;
 				updateKnob(self, event);
 			}
-
-			
 
 			document.onmouseup   = function(event) { self.isMouseDown = false; };
 
@@ -262,27 +301,87 @@
 																  'position: ' + self.position;
 			}
 		}
+	}
 
-		function triggerEvents(self) {
-			// create a custom event
-			var valueChangeEvent = document.createEvent('Event');
+	/**
+	*	@param {number} sensitivity - Integer value that sets fast does 
+	*   							  the value change when we drag the mouse (smaller number = faster).
+	*/
+	function setUpVerticalDragListeners(self, sensitivity) {
+		self.isMouseDown = false;
 
-			// define that the event name is 'potValueChanged'.
-			valueChangeEvent.initEvent('potValueChanged', true, true);
+		self.canvas.onmousedown = function(event) {
+			var currentY = 0;
+			var lastY    = event.clientY;
+			var deltaY   = 0;
+			var ctrlMod  = 1;
+			
+			self.isMouseDown = true;
 
-			// make the pot value available to the listener
-			valueChangeEvent.srcValue = self.position;
+			document.onmouseup   = function(event) { 
+				self.isMouseDown = false;
+				deltaY = 0;
+			};
 
-			// make the canvas that triggered the event available to the listener
-			valueChangeEvent.srcId = self.canvas.id;
+			document.onmousemove = function(event) {
 
-			// target can be any Element or other EventTarget.
-			self.canvas.dispatchEvent(valueChangeEvent);
-		}
+				if (self.isMouseDown) {
+
+					// If the ctrl button is down, make fine adjustments to the value
+					if (event.ctrlKey)
+						ctrlMod = 4;
+					else
+						ctrlMod = 1;
+
+					currentY = event.clientY;
+					deltaY += (lastY - currentY) / (sensitivity * ctrlMod);
+
+					if (deltaY > 1 || deltaY <= -1) {
+
+						deltaY = ~~deltaY; // cast to int
+						updateKnob(self, deltaY);
+						deltaY = 0;
+
+					}
+
+					lastY = currentY;
+
+				}
+
+			};
+
+			function updateKnob(self, deltaY) {
+				if (self.isMouseDown) {
+
+					// Set the position property
+					self.position += deltaY;
+
+					// Prevent position overshoot/undershoot
+					if      (self.position > 100) self.position = 100;
+					else if (self.position < 0)   self.position =   0;
+
+					var yPos = getYPos(self.position / 100, self);
+
+					// Draw the widget
+					drawOnCanvas(self, yPos);
+
+					triggerEvents(self);
+
+					// statistics, for testing purposes 
+					//TODO: delete this in the production version
+					document.getElementById('cursorInfo').innerHTML = 'x dist: '   + 0 + '<br>' +
+																	  'y dist: '   + 0 + '<br>' +
+																	  'arc: '      + 0   + '<br>' +
+																	  'position: ' + self.position;
+				}
+			}
+
+		};
 
 	}
 
 	/* --------------- Interface methods --------------- */
+	
 	function addInterfaceMethods(self) {
 
 		self.getValue = function() {
@@ -299,6 +398,7 @@
 		};
 
 	}
+	
 	/* ------------------------------------------------- */
 
 	// Make the constructor available in the global scope
