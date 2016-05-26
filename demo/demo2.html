@@ -11,7 +11,7 @@
 
 	<!-- Just some quick styling -->
 	<style>
-		body {
+		body, input {
 			background: #000;
 			font-family: Helvetica, Arial, sans-serif;
 			color: white;
@@ -50,16 +50,26 @@
 			margin-right: 20px;
 			margin-top: 25px;
 		}
+		input[type='number'] {
+		    -moz-appearance:textfield;
+		}
+
+		input::-webkit-outer-spin-button,
+		input::-webkit-inner-spin-button {
+		    -webkit-appearance: none;
+		}
 		.pot-value {
+			font-size: 1em;
+			text-align: center;
+			width: 2.4em;
 			position: absolute;
 			background-color: #222;
 			border: 1px solid #333;
-			padding: 0 0.2em;
 			display: none;
-			margin-left: 2em;
+			margin-left: 1.8em;
 		}
 		#pot1-value {
-			margin-left: 2em;
+			margin-left: 1.7em;
 		}
 		p {
 			text-align: left;
@@ -75,9 +85,8 @@
 <body>
 	<!-- Some development info -->
 	<div id="cursorInfo" style="color: white">
-		x:<br>
-		y:<br>
-		arc:<br>
+		x dist:<br>
+		y dist:<br>
 		position:
 	</div>
 	<h1 style="font-size: 100%; text-align: center">An example with background images and value displays:</h1>
@@ -85,7 +94,7 @@
 	<div id="pots">
 		
 		<div id="big-pot">
-			<div class="pot-value" id="pot1-value">0</div>
+			<input class="pot-value" id="pot1-value" type="number" value="0" disabled></input>
 			<canvas id="pot1"></canvas>
 			<br>
 			<label>DRIVE</label>
@@ -93,19 +102,19 @@
 
 		<div id="small-pots">
 			<div class="small-pot">
-				<div class="pot-value" id="pot2-value">0</div>
+				<input class="pot-value" id="pot2-value" type="number" value="0" disabled></input>
 				<canvas id="pot2"></canvas>
 				<br>
 				<label>LOW CUT</label>
 			</div>
 			<div class="small-pot">
-				<div class="pot-value" id="pot3-value">0</div>
+				<input class="pot-value" id="pot3-value" type="number" value="0" disabled></input>
 				<canvas id="pot3"></canvas>
 				<br>
 				<label>TONE</label>
 			</div>
 			<div class="small-pot">
-				<div class="pot-value" id="pot4-value">0</div>
+				<input class="pot-value" id="pot4-value" type="number" value="0" disabled></input>
 				<canvas id="pot4"></canvas>
 				<br>
 				<label>HIGH CUT</label>
@@ -123,6 +132,10 @@
 
 		<p>
 			You can also incorporate your own tooltip, which I've done here to display the value of the knob that's currently being adjusted.
+		</p>
+
+		<p>
+			If you double-click on the pot, you can type in the precise value with your keyboard.
 		</p>
 
 	</div>
@@ -220,7 +233,7 @@
 					potLabel.style.display = 'inline-block';
 
 					// give it appropriate text
-					potLabel.innerHTML = (event.srcValue / 10).toFixed(1);
+					potLabel.value = (event.srcValue / 10).toFixed(1);
 
 					// hide it after 1 second
 					valueDisplayTimeouts.push(setTimeout(function() {
@@ -228,19 +241,142 @@
 					}, 1000));
 
 				}
+				
 
-				function clearTimeouts() {
-					valueDisplayTimeouts.forEach(function(timeout) {
-						clearTimeout(timeout);
-					});
+			}, false);
+
+			function hideAllValueLabels() {
+				for (var i = allValueLabels.length - 1; i >= 0; i--)
+					allValueLabels[i].style.display = 'none';
+			}
+
+			function clearTimeouts() {
+				valueDisplayTimeouts.forEach(function(timeout) {
+					clearTimeout(timeout);
+				});
+			}
+
+			// Listen for potentiometer double clicks
+			document.addEventListener('potDoubleClick', function(event) {
+
+				var eventEmitterId = event.srcId;
+
+
+				// I know that using switch statements is not performant, I've used here just for readability purposes
+				switch (eventEmitterId) {
+					case 'pot1':
+						editPotValue(pot1value);
+						break;
+					case 'pot2':
+						editPotValue(pot2value);
+						break;
+					case 'pot3':
+						editPotValue(pot3value);
+						break;
+					case 'pot4':
+						editPotValue(pot4value);
+						break;
 				}
 
-				function hideAllValueLabels() {
-					for (var i = allValueLabels.length - 1; i >= 0; i--)
-						allValueLabels[i].style.display = 'none';
+				function editPotValue(potValue) {
+					potValue.disabled = false;
+					clearTimeouts();
+					potValue.focus();
 				}
 
 			}, false);
+
+			// Listen for input 'enter' events
+			// Breaking the DRY rule, I know, just too lazy to condense it for the demo
+			pot1value.onkeypress = function(event) {
+				limitChars(pot1value);
+				var keyCode = event.keyCode;
+				if (keyCode === 13) {
+					inputValue(pot1value, pot1);
+					return false;
+				}
+			};
+			pot1value.onblur = function(event) { 
+				pot1value.value = (pot1.getValue() / 10).toFixed(1); 
+				setTimeout(function() {
+					hideAllValueLabels();
+				}, 1000);
+			};
+
+			pot2value.onkeypress = function(event) {
+				limitChars(pot2value);
+				var keyCode = event.keyCode;
+				if (keyCode === 13) {
+					inputValue(pot2value, pot2);
+					return false;
+				}
+			};
+			pot3value.onblur = function(event) { 
+				pot2value.value = (pot2.getValue() / 10).toFixed(1); 
+				setTimeout(function() {
+					hideAllValueLabels();
+				}, 1000);
+			};
+
+			pot3value.onkeypress = function(event) {
+				limitChars(pot3value);
+				var keyCode = event.keyCode;
+				if (keyCode === 13) {
+					inputValue(pot3value, pot3);
+					return false;
+				}
+			};
+			pot3value.onblur = function(event) { 
+				pot3value.value = (pot3.getValue() / 10).toFixed(1); 
+				setTimeout(function() {
+					hideAllValueLabels();
+				}, 1000);
+			};
+
+			pot4value.onkeypress = function(event) {
+				limitChars(pot4value);
+				var keyCode = event.keyCode;
+				if (keyCode === 13) {
+					inputValue(pot4value, pot4);
+					return false;
+				}
+			};
+			pot4value.onblur = function(event) { 
+				pot4value.value = (pot4.getValue() / 10).toFixed(1); 
+				setTimeout(function() {
+					hideAllValueLabels();
+				}, 1000);
+			};
+
+			// Limits the inputs to 4 characters
+			function limitChars(potLabel) {
+				if (potLabel.value.length > 3)
+					potLabel.value = potLabel.value.slice(0, 4);
+			}
+
+			// Sets the widget to the value we've specified in the input box
+			function inputValue(potLabel, pot) {
+
+				var value = Number(potLabel.value);
+
+				if (isNaN(value)) {
+					potLabel.value = (pot.getValue() / 10).toFixed(1);
+				} else {
+
+					if      (value > 10) value = 10;
+					else if (value < 0 ) value = 0;
+
+					potLabel.value = value.toFixed(1);
+					pot.setValue(value * 10);
+
+				}
+				potLabel.blur();
+				potLabel.disabled = true;
+
+				setTimeout(function() {
+					hideAllValueLabels();
+				}, 1000);
+			}
 
 		};
 

@@ -100,7 +100,7 @@
 					// see if the user wants to control the knobs by rotation
 					var verticalDrag = options.verticalDrag      || false;
 					var sens   = options.sensitivity || 3;
-					setUpMouseListeners(self, verticalDrag, sens);
+					setUpListeners(self, verticalDrag, sens);
 
 					// Recalculate centers when window resizes
 					global.addEventListener('resize', function() {
@@ -161,8 +161,7 @@
 
 	function drawKnob(self, isMouseEvent) {
 		var percent = self.position;
-
-		// Don't allow values less than 0 and greater than 100
+		// Don't allow values less than 0 and greater than 100 (or whatever the bounds the user has provided)
 		if (percent < self.leftBound)
 			percent = self.leftBound;
 		else if (percent > self.rightBound)
@@ -227,33 +226,34 @@
 		return yPos;
 	}
 
-	function setUpMouseListeners(self, verticalDrag, sensitivity) {
+	function setUpListeners(self, verticalDrag, sensitivity) {
 
 		if (verticalDrag === true)				// if we want to control the knobs by vertical mouse dragging
 			setUpVerticalDragListeners(self, sensitivity);
 		else {									// if we want to control the knobs by rotation
 			setUpRotationListeners(self);
-		}					
-			
+		}
+
+		setUpDoubleClick(self);
 
 	}
 
-	function triggerEvents(self) {
-			// create a custom event
-			var valueChangeEvent = document.createEvent('Event');
+	function triggerEvent(self, eventName) {
+		// create a custom event
+		var widgetEvent = document.createEvent('Event');
 
-			// define that the event name is 'potValueChanged'.
-			valueChangeEvent.initEvent('potValueChanged', true, true);
+		// define that the event name is
+		widgetEvent.initEvent(eventName, true, true);
 
-			// make the pot value available to the listener
-			valueChangeEvent.srcValue = self.position;
+		// make the pot value available to the listener
+		widgetEvent.srcValue = self.position;
 
-			// make the canvas that triggered the event available to the listener
-			valueChangeEvent.srcId = self.canvas.id;
+		// make the canvas that triggered the event available to the listener
+		widgetEvent.srcId = self.canvas.id;
 
-			// target can be any Element or other EventTarget.
-			self.canvas.dispatchEvent(valueChangeEvent);
-		}
+		// dispatch the event
+		self.canvas.dispatchEvent(widgetEvent);
+	}
 
 	function setUpRotationListeners(self) {
 		self.isMouseDown = false;
@@ -265,7 +265,7 @@
 			yDist = -(event.pageY - self.center.y);
 			totalDist = Math.sqrt(xDist * xDist + yDist * yDist);
 
-			if (totalDist > (self.canvas.width / 2))
+			if (totalDist > (self.spritesheet.width / 2))
 				self.isMouseDown = false;
 			else {
 				self.isMouseDown = true;
@@ -291,13 +291,12 @@
 				self.position = ~~(101 * (arc) + 50);
 				drawKnob(self, true);
 
-				triggerEvents(self);
+				triggerEvent(self, 'potValueChanged');
 
 				// statistics, for testing purposes 
 				//TODO: delete this in the production version
 				document.getElementById('cursorInfo').innerHTML = 'x dist: '   + xDist + '<br>' +
 																  'y dist: '   + yDist + '<br>' +
-																  'arc: '      + arc   + '<br>' +
 																  'position: ' + self.position;
 			}
 		}
@@ -365,13 +364,12 @@
 					// Draw the widget
 					drawOnCanvas(self, yPos);
 
-					triggerEvents(self);
+					triggerEvent(self, 'potValueChanged');
 
 					// statistics, for testing purposes 
 					//TODO: delete this in the production version
 					document.getElementById('cursorInfo').innerHTML = 'x dist: '   + 0 + '<br>' +
 																	  'y dist: '   + 0 + '<br>' +
-																	  'arc: '      + 0   + '<br>' +
 																	  'position: ' + self.position;
 				}
 			}
@@ -380,8 +378,21 @@
 
 	}
 
+	// Double click setup
+	function setUpDoubleClick(self) {
+		self.canvas.addEventListener('dblclick', function(event) {
+			var xDist =  (event.pageX - self.center.x);
+			var yDist = -(event.pageY - self.center.y);
+			var totalDist = Math.sqrt(xDist * xDist + yDist * yDist);
+
+			if (totalDist < (self.spritesheet.width / 2))
+				triggerEvent(self, 'potDoubleClick');
+
+		});
+	}
+
 	/* --------------- Interface methods --------------- */
-	
+
 	function addInterfaceMethods(self) {
 
 		self.getValue = function() {
@@ -389,16 +400,15 @@
 		};
 
 		self.setValue = function(position) {
-			position = ~~position;
-			if (position > 100) position = 100;
-			else if (position < 0) position = 0;
+			self.position = ~~position;
+			var yPos = getYPos(self.position / 100, self);
 
-			self.position = position;
-			drawKnob(self);
+			// Draw the widget
+			drawOnCanvas(self, yPos);
 		};
 
 	}
-	
+
 	/* ------------------------------------------------- */
 
 	// Make the constructor available in the global scope
