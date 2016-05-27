@@ -244,8 +244,10 @@
 			}, false);
 
 			function hideAllValueLabels() {
-				for (var i = allValueLabels.length - 1; i >= 0; i--)
+				for (var i = allValueLabels.length - 1; i >= 0; i--) {
 					allValueLabels[i].style.display = 'none';
+					allValueLabels[i].disabled = true;
+				}
 			}
 
 			function clearTimeouts() {
