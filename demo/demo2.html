@@ -22,6 +22,9 @@
 			-ms-user-select: none;
 			user-select: none;
 		}
+		body {
+			padding-top: 100px;
+		}
 		#pots {
 			display: block;
 			margin: 30px auto 15px;
@@ -83,12 +86,7 @@
 </head>
 
 <body>
-	<!-- Some development info -->
-	<div id="cursorInfo" style="color: white">
-		x dist:<br>
-		y dist:<br>
-		position:
-	</div>
+
 	<h1 style="font-size: 100%; text-align: center">An example with background images and value displays:</h1>
 
 	<div id="pots">
@@ -367,7 +365,7 @@
 					else if (value < 0 ) value = 0;
 
 					potLabel.value = value.toFixed(1);
-					pot.setValue(value * 10);
+					pot.setValue(value.toFixed(1) * 10);
 
 				}
 				potLabel.blur();

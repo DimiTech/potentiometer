@@ -189,22 +189,22 @@
 	}
 
 	function drawOnCanvas(self, yPos) {
-			var context = self.context;
-			context.clearRect(0, 0, self.canvas.width, self.canvas.height);
+		var context = self.context;
+		context.clearRect(0, 0, self.canvas.width, self.canvas.height);
 
-			/* If there's a background image specified draw it after the knob, if not just draw the knob */
-			if (self.bgImg !== undefined) {
-				var knobWidth = self.spritesheet.width;
-				// yPos' sign needs to be inverted for this to work... what a bunch of BS from the canvas API..
-				yPos = -yPos;
-				context.drawImage(self.spritesheet, 0, yPos, knobWidth, knobWidth, self.xOffset, self.yOffset, knobWidth, knobWidth);
-				drawBgImg(self);
-			} else {
-				context.drawImage(self.spritesheet, 0, yPos);
-			}
-
-			self.lastPosition = self.position;
+		/* If there's a background image specified draw it after the knob, if not just draw the knob */
+		if (self.bgImg !== undefined) {
+			var knobWidth = self.spritesheet.width;
+			// yPos' sign needs to be inverted for this to work... what a bunch of BS from the canvas API..
+			yPos = -yPos;
+			context.drawImage(self.spritesheet, 0, yPos, knobWidth, knobWidth, self.xOffset, self.yOffset, knobWidth, knobWidth);
+			drawBgImg(self);
+		} else {
+			context.drawImage(self.spritesheet, 0, yPos);
 		}
+
+		self.lastPosition = self.position;
+	}
 
 	function drawBgImg(self) {
 		var context = self.context;
@@ -292,12 +292,6 @@
 				drawKnob(self, true);
 
 				triggerEvent(self, 'potValueChanged');
-
-				// statistics, for testing purposes 
-				//TODO: delete this in the production version
-				document.getElementById('cursorInfo').innerHTML = 'x dist: '   + xDist + '<br>' +
-																  'y dist: '   + yDist + '<br>' +
-																  'position: ' + self.position;
 			}
 		}
 	}
@@ -365,12 +359,6 @@
 					drawOnCanvas(self, yPos);
 
 					triggerEvent(self, 'potValueChanged');
-
-					// statistics, for testing purposes 
-					//TODO: delete this in the production version
-					document.getElementById('cursorInfo').innerHTML = 'x dist: '   + 0 + '<br>' +
-																	  'y dist: '   + 0 + '<br>' +
-																	  'position: ' + self.position;
 				}
 			}
 
@@ -400,8 +388,19 @@
 		};
 
 		self.setValue = function(position) {
+
+			// Prevent position overshoot/undershoot
+			if      (position > 100) position = 100;
+			else if (position < 0)   position =   0;
+
 			self.position = ~~position;
-			var yPos = getYPos(self.position / 100, self);
+
+			// Take bounds into account
+			var boundsPercent = (self.rightBound - self.leftBound) / 100;
+
+			position = self.leftBound + (position * boundsPercent);
+ 
+			var yPos = getYPos(position / 100, self);
 
 			// Draw the widget
 			drawOnCanvas(self, yPos);
