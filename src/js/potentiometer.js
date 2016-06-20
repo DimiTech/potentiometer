@@ -353,10 +353,16 @@
 					if      (self.position > 100) self.position = 100;
 					else if (self.position < 0)   self.position =   0;
 
-					var yPos = getYPos(self.position / 100, self);
+					// Calculate bounds for drawing
+					var position = (self.position / 100) * (self.rightBound - self.leftBound) + self.leftBound;
+
+					var yPos = getYPos(position / 100, self);
 
 					// Draw the widget
 					drawOnCanvas(self, yPos);
+
+					console.log(position);
+					console.log('self.position: ' + self.position);
 
 					triggerEvent(self, 'potValueChanged');
 				}
